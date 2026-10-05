@@ -1,0 +1,281 @@
+{
+ "service": "adaptive-tutor-engine",
+ "run": "demo-1",
+ "tokens": {
+  "admin": "school-admin-demo",
+  "teacher": "school-teacher-demo",
+  "student": "school-student-demo"
+ },
+ "steps": [
+  {
+   "title": "A course as a map, not a list",
+   "say": "Eighteen pre-algebra concepts and what each depends on. One simulated student, S-001, is enrolled. The simulator knows what S-001 really understands; the tutor only ever sees answers.",
+   "calls": [
+    {
+     "key": "load",
+     "as": "admin",
+     "method": "POST",
+     "path": "/v1/scenarios/classroom"
+    },
+    {
+     "key": "graph",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/courses/{{load.course_id}}/knowledge-graph"
+    }
+   ]
+  },
+  {
+   "title": "A placement quiz, and a pattern in the wrong answers",
+   "say": "One item per concept. S-001 gets several wrong, and the wrong answers are not random: each is exactly what you get by treating 'minus a negative' as 'minus'. The tutor notices, and lowers its trust only in the concepts that depend on that skill.",
+   "calls": [
+    {
+     "key": "diag",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "diagnostic": true,
+      "day": 0
+     }
+    },
+    {
+     "key": "m0",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/learners/{{load.learner_id}}/mastery?day=0"
+    },
+    {
+     "key": "graph0",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/courses/{{load.course_id}}/knowledge-graph?learner_id={{load.learner_id}}"
+    }
+   ]
+  },
+  {
+   "title": "One wrong answer, up close",
+   "say": "A fresh item is generated for 'x + a = b' with a negative a. The student answers with the sign error. The tutor's feedback comes word for word from the course content, names the rule, and does not give the answer away on a first try.",
+   "calls": [
+    {
+     "key": "gen",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/content/generate",
+     "body": {
+      "concept": "eq_add",
+      "count": 1,
+      "seed": 7,
+      "target_misconception": "sub_negative"
+     }
+    },
+    {
+     "key": "tutor1",
+     "as": "student",
+     "method": "POST",
+     "path": "/v1/tutor/respond",
+     "body": {
+      "learner_id": "{{load.learner_id}}",
+      "item_id": "{{gen.items.0.item_id}}",
+      "response": "{{gen.items.0.bugs.sub_negative}}",
+      "attempt_no": 1
+     }
+    },
+    {
+     "key": "att",
+     "as": "student",
+     "method": "POST",
+     "path": "/v1/attempts",
+     "body": {
+      "learner_id": "{{load.learner_id}}",
+      "item_id": "{{gen.items.0.item_id}}",
+      "response": "{{gen.items.0.bugs.sub_negative}}",
+      "day": 0
+     }
+    }
+   ]
+  },
+  {
+   "title": "What should S-001 do next?",
+   "say": "Not the next chapter. The tutor recommends fixing the misconception first, because six later concepts depend on it. Four days of sessions follow that plan, twelve activities a day.",
+   "calls": [
+    {
+     "key": "next",
+     "as": "student",
+     "method": "POST",
+     "path": "/v1/recommendations/next",
+     "body": {
+      "learner_id": "{{load.learner_id}}",
+      "day": 1
+     }
+    },
+    {
+     "key": "d1",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 1
+     }
+    },
+    {
+     "key": "d2",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 2
+     }
+    },
+    {
+     "key": "d3",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 3
+     }
+    },
+    {
+     "key": "d4",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 4
+     }
+    },
+    {
+     "key": "m4",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/learners/{{load.learner_id}}/mastery?day=4"
+    }
+   ]
+  },
+  {
+   "title": "Coming back before it is forgotten",
+   "say": "Memory fades unless it is used. Each concept has an estimated half-life that doubles with every successful review a day or more apart, and the tutor schedules a review when recall is about to drop below 85%. Five more sessions, every other day.",
+   "calls": [
+    {
+     "key": "d6",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 6
+     }
+    },
+    {
+     "key": "d8",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 8
+     }
+    },
+    {
+     "key": "d10",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 10
+     }
+    },
+    {
+     "key": "d12",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 12
+     }
+    },
+    {
+     "key": "d14",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/simulations/learners/{{load.learner_id}}/session",
+     "body": {
+      "activities": 12,
+      "day": 14
+     }
+    },
+    {
+     "key": "m14",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/learners/{{load.learner_id}}/mastery?day=14"
+    },
+    {
+     "key": "graph14",
+     "as": "teacher",
+     "method": "GET",
+     "path": "/v1/courses/{{load.course_id}}/knowledge-graph?learner_id={{load.learner_id}}&day=14"
+    }
+   ]
+  },
+  {
+   "title": "Things the tutor refuses to do",
+   "say": "A second wrong try that matches no known misconception gets the plain rule and, now, the answer: it is not labelled a misconception. And an answer that is not a number is refused outright instead of being guessed at.",
+   "calls": [
+    {
+     "key": "tutor2",
+     "as": "student",
+     "method": "POST",
+     "path": "/v1/tutor/respond",
+     "body": {
+      "learner_id": "{{load.learner_id}}",
+      "item_id": "{{gen.items.0.item_id}}",
+      "response": 9999,
+      "attempt_no": 2
+     }
+    },
+    {
+     "key": "bad",
+     "as": "student",
+     "method": "POST",
+     "path": "/v1/attempts",
+     "body": {
+      "learner_id": "{{load.learner_id}}",
+      "item_id": "{{gen.items.0.item_id}}",
+      "response": "the answer is five"
+     },
+     "expect_error": true
+    }
+   ]
+  },
+  {
+   "title": "Does it beat a fixed sequence?",
+   "say": "Three hundred simulated students are taught twice: once by this tutor, once in course order with regular mixed review. Same students, same number of activities. Then the audit trail.",
+   "calls": [
+    {
+     "key": "exp",
+     "as": "teacher",
+     "method": "POST",
+     "path": "/v1/experiments/adaptive-vs-fixed",
+     "body": {
+      "students": 300,
+      "days": 30
+     }
+    },
+    {
+     "key": "audit",
+     "as": "admin",
+     "method": "GET",
+     "path": "/v1/audit?limit=6"
+    }
+   ]
+  }
+ ]
+}

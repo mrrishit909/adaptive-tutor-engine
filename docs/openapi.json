@@ -1,0 +1,1119 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "adaptive-tutor-engine",
+  "version": "1.0.0"
+ },
+ "paths": {
+  "/v1/jobs/{job_id}": {
+   "get": {
+    "tags": [
+     "platform"
+    ],
+    "summary": "Status, attempts and result of a long-running job",
+    "operationId": "job_status_v1_jobs__job_id__get",
+    "parameters": [
+     {
+      "name": "job_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Job Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/jobs": {
+   "get": {
+    "tags": [
+     "platform"
+    ],
+    "summary": "Jobs by status; status=dead is the dead-letter view",
+    "operationId": "job_list_v1_jobs_get",
+    "parameters": [
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "dead",
+       "title": "Status"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/audit": {
+   "get": {
+    "tags": [
+     "platform"
+    ],
+    "summary": "Latest audit events and whether the hash chain verifies",
+    "operationId": "audit_log_v1_audit_get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 50,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/scenarios/classroom": {
+   "post": {
+    "tags": [
+     "scenario"
+    ],
+    "summary": "(+) Load the pre-algebra course and one simulated learner who subtracts negatives wrongly. Resets this tenant's course data",
+    "operationId": "classroom_v1_scenarios_classroom_post",
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/courses/{course_id}/knowledge-graph": {
+   "get": {
+    "tags": [
+     "curriculum"
+    ],
+    "summary": "Concepts and prerequisite links, optionally coloured with one learner's mastery",
+    "operationId": "graph_v1_courses__course_id__knowledge_graph_get",
+    "parameters": [
+     {
+      "name": "course_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Course Id"
+      }
+     },
+     {
+      "name": "learner_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "uuid"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Learner Id"
+      }
+     },
+     {
+      "name": "day",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 0,
+       "title": "Day"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/generate": {
+   "post": {
+    "tags": [
+     "content"
+    ],
+    "summary": "Generate practice items for a concept from its template. Answers are computed, and re-computed independently where the item can be parsed back",
+    "operationId": "generate_v1_content_generate_post",
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GenerateIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/attempts": {
+   "post": {
+    "tags": [
+     "assessment"
+    ],
+    "summary": "Record one answer. The learner model is updated and a wrong answer is checked against what each misconception would have produced",
+    "operationId": "attempt_v1_attempts_post",
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AttemptIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/learners": {
+   "get": {
+    "tags": [
+     "mastery"
+    ],
+    "summary": "(+) Learners in this school, by external id only",
+    "operationId": "learners_v1_learners_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/learners/{learner_id}/mastery": {
+   "get": {
+    "tags": [
+     "mastery"
+    ],
+    "summary": "Every concept for one learner: mastery, how far it can be trusted, recall today, when a review is due, and suspected misconceptions",
+    "operationId": "mastery_v1_learners__learner_id__mastery_get",
+    "parameters": [
+     {
+      "name": "learner_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Learner Id"
+      }
+     },
+     {
+      "name": "day",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 0,
+       "title": "Day"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/recommendations/next": {
+   "post": {
+    "tags": [
+     "recommendations"
+    ],
+    "summary": "The next activity for a learner, the item to show, and the reason it was chosen",
+    "operationId": "next_activity_v1_recommendations_next_post",
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/NextIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/tutor/respond": {
+   "post": {
+    "tags": [
+     "tutor"
+    ],
+    "summary": "Feedback on an answer, taken only from the course content. The answer itself is not given away on a first wrong try",
+    "operationId": "tutor_v1_tutor_respond_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TutorIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/simulations/learners/{learner_id}/session": {
+   "post": {
+    "tags": [
+     "simulation"
+    ],
+    "summary": "(+) Let the simulated learner work through a session: the tutor chooses, the simulator answers, each answer is recorded like any other",
+    "operationId": "session_v1_simulations_learners__learner_id__session_post",
+    "parameters": [
+     {
+      "name": "learner_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Learner Id"
+      }
+     },
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SessionIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/experiments/adaptive-vs-fixed": {
+   "post": {
+    "tags": [
+     "analytics"
+    ],
+    "summary": "(+) Teach the same simulated students two ways and compare what they know afterwards (job)",
+    "operationId": "experiment_v1_experiments_adaptive_vs_fixed_post",
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Idempotency-Key"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExperimentIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AttemptIn": {
+    "properties": {
+     "learner_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Learner Id"
+     },
+     "item_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Item Id"
+     },
+     "response": {
+      "type": "integer",
+      "maximum": 1000000.0,
+      "minimum": -1000000.0,
+      "title": "Response",
+      "description": "Answers are whole numbers; anything else is refused"
+     },
+     "response_time_ms": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 3600000.0,
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Response Time Ms"
+     },
+     "day": {
+      "type": "integer",
+      "maximum": 3650.0,
+      "minimum": 0.0,
+      "title": "Day",
+      "description": "Day of the course, for spacing. A real deployment would take this from the clock",
+      "default": 0
+     }
+    },
+    "type": "object",
+    "required": [
+     "learner_id",
+     "item_id",
+     "response"
+    ],
+    "title": "AttemptIn"
+   },
+   "ExperimentIn": {
+    "properties": {
+     "students": {
+      "type": "integer",
+      "maximum": 600.0,
+      "minimum": 20.0,
+      "title": "Students",
+      "default": 300
+     },
+     "days": {
+      "type": "integer",
+      "maximum": 60.0,
+      "minimum": 5.0,
+      "title": "Days",
+      "default": 30
+     }
+    },
+    "type": "object",
+    "title": "ExperimentIn"
+   },
+   "GenerateIn": {
+    "properties": {
+     "concept": {
+      "type": "string",
+      "title": "Concept",
+      "description": "Concept key, e.g. int_sub"
+     },
+     "count": {
+      "type": "integer",
+      "maximum": 20.0,
+      "minimum": 1.0,
+      "title": "Count",
+      "default": 3
+     },
+     "seed": {
+      "type": "integer",
+      "maximum": 1000000000.0,
+      "minimum": 0.0,
+      "title": "Seed",
+      "default": 0
+     },
+     "target_misconception": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Target Misconception"
+     }
+    },
+    "type": "object",
+    "required": [
+     "concept"
+    ],
+    "title": "GenerateIn"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "NextIn": {
+    "properties": {
+     "learner_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Learner Id"
+     },
+     "day": {
+      "type": "integer",
+      "maximum": 3650.0,
+      "minimum": 0.0,
+      "title": "Day",
+      "default": 0
+     }
+    },
+    "type": "object",
+    "required": [
+     "learner_id"
+    ],
+    "title": "NextIn"
+   },
+   "SessionIn": {
+    "properties": {
+     "activities": {
+      "type": "integer",
+      "maximum": 60.0,
+      "minimum": 1.0,
+      "title": "Activities",
+      "default": 8
+     },
+     "day": {
+      "type": "integer",
+      "maximum": 3650.0,
+      "minimum": 0.0,
+      "title": "Day",
+      "default": 0
+     },
+     "diagnostic": {
+      "type": "boolean",
+      "title": "Diagnostic",
+      "description": "One item per concept in course order instead of the tutor's own choices",
+      "default": false
+     }
+    },
+    "type": "object",
+    "title": "SessionIn"
+   },
+   "TutorIn": {
+    "properties": {
+     "learner_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Learner Id"
+     },
+     "item_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Item Id"
+     },
+     "response": {
+      "type": "integer",
+      "maximum": 1000000.0,
+      "minimum": -1000000.0,
+      "title": "Response"
+     },
+     "attempt_no": {
+      "type": "integer",
+      "maximum": 5.0,
+      "minimum": 1.0,
+      "title": "Attempt No",
+      "default": 1
+     }
+    },
+    "type": "object",
+    "required": [
+     "learner_id",
+     "item_id",
+     "response"
+    ],
+    "title": "TutorIn"
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   }
+  }
+ }
+}

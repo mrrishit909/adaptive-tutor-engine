@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adaptive Tutor Engine</title>
+<link rel="stylesheet" href="kit.css">
+<style>.big { font-size:17px; margin:0 0 10px; } .say { border-left:3px solid var(--accent); padding:8px 12px; background:#12141c; border-radius:0 8px 8px 0; margin:8px 0; }</style>
+</head>
+<body>
+<header class="top">
+  <h1>Adaptive Tutor Engine</h1>
+  <span class="sub">A pre-algebra course, one simulated student who subtracts negatives wrongly. What should they do next?</span>
+  <span class="mode">…</span>
+  <button class="primary" id="runall">Run all steps</button>
+</header>
+<main>
+  <nav class="steps"></nav>
+  <div><div id="steps"></div></div>
+</main>
+<footer>The student and the experiment's 300 learners are simulated, and they learn the way the tutor's model assumes. This shows the engine working in that world, not that it helps real children. The tutor writes no text of its own: every hint is a line from the course content.</footer>
+<script src="kit.js"></script>
+<script>
+const COL = { mastered: '#3fb97a', 'held back': '#e0a63c', learning: '#7aa2ff', 'not started': '#55555f' };
+function graphSvg(g) {
+  const cols = {}; g.nodes.forEach(n => (cols[n.depth] = cols[n.depth] || []).push(n));
+  const depths = Object.keys(cols).length, w = 760, colW = w / depths, rowH = 44, h = Math.max(...Object.values(cols).map(c => c.length)) * rowH + 20, pos = {};
+  Object.entries(cols).forEach(([d, ns]) => ns.forEach((n, i) => pos[n.key] = [d * colW + 8, 14 + i * rowH + (h - 20 - ns.length * rowH) / 2]));
+  const bw = colW - 22;
+  let s = g.edges.map(e => `<path d="M${pos[e.source][0] + bw} ${pos[e.source][1] + 14}C${pos[e.source][0] + bw + 20} ${pos[e.source][1] + 14} ${pos[e.target][0] - 20} ${pos[e.target][1] + 14} ${pos[e.target][0]} ${pos[e.target][1] + 14}" fill="none" stroke="#3a3a44"/>`).join('');
+  s += g.nodes.map(n => { const c = n.status ? COL[n.status] : '#7aa2ff', fill = n.status ? (n.status === 'not started' ? '#1b1b1f' : c + '33') : '#1b1b1f';
+    return `<rect x="${pos[n.key][0]}" y="${pos[n.key][1]}" width="${bw}" height="28" rx="6" fill="${fill}" stroke="${c}"><title>${esc(n.name)}${n.trusted == null ? '' : ': trusted mastery ' + fmt.pct(n.trusted)}</title></rect>
+      <text x="${pos[n.key][0] + 7}" y="${pos[n.key][1] + 18}" style="fill:#ececf1;font-size:10px">${esc(n.name.length > 21 ? n.name.slice(0, 20) + '…' : n.name)}</text>${n.trusted == null || n.status === 'not started' ? '' : `<text x="${pos[n.key][0] + bw - 6}" y="${pos[n.key][1] + 18}" text-anchor="end" style="fill:${c};font-size:10px;font-weight:600">${fmt.pct(n.trusted)}</text>`}`; }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Knowledge graph">${s}</svg>` + (g.nodes[0].status ? `<div class="legend">${Object.entries(COL).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}<span>% = mastery the tutor trusts</span></div>` : '');
+}
+const days = (r, ks) => table([{ k: 'day', label: 'Day' }, { k: 'fix', label: 'Fix misconception', num: 1 }, { k: 'review', label: 'Review', num: 1 }, { k: 'learn', label: 'New learning', num: 1 }, { k: 'correct', label: 'Right', num: 1 },
+    { k: 'm', label: 'Sign-error belief', num: 1, f: v => fmt.pct(v) }, { k: 'tutor', label: 'Mastered (tutor thinks)', num: 1 }, { k: 'truth', label: 'Mastered (really)', num: 1 }],
+  ks.map(k => ({ day: r[k].day, fix: r[k].by_activity.remediate || 0, review: r[k].by_activity.review || 0, learn: r[k].by_activity.learn || 0, correct: r[k].correct + ' of ' + r[k].activities, m: r[k].misconceptions.sub_negative, tutor: r[k].mastered_now, truth: r[k].simulator_truth.really_mastered })));
+const tutorCard = (t, title) => card(title, `<div class="say">${esc(t.message)}</div><div>${t.sources.map(s => badge('source: ' + s, 'info')).join(' ')} ${badge(t.answer_revealed ? 'answer shown' : 'answer not given away', t.answer_revealed ? 'warn' : 'good')} ${t.diagnosis ? badge('diagnosed: ' + t.diagnosis.replace(/_/g, ' '), 'warn') : badge('no misconception matched')}</div>`);
+const R = {
+  load: s => kpis([{ label: 'Concepts', value: s.concepts }, { label: 'Prerequisite links', value: s.prerequisite_links }, { label: 'Misconceptions modelled', value: s.misconceptions_modelled.length }, { label: 'Learner', value: s.learner, sub: 'simulated' }]),
+  graph: g => card('The course: what depends on what', graphSvg(g)),
+  diag: d => kpis([{ label: 'Right on the quiz', value: d.correct + ' of ' + d.activities }, { label: 'Wrong in the same way', value: d.sign_errors_diagnosed, sub: 'exactly the sign-error answer' }, { label: 'Belief: holds the sign error', value: fmt.pct(d.misconceptions.sub_negative) }])
+    + card('The wrong answers that gave it away', table([{ k: 'stem', label: 'Item', f: v => `<span class="mono">${esc(v)}</span>` }, { k: 'response', label: 'Answered', num: 1 }, { k: 'answer', label: 'Correct', num: 1 }, { k: 'diagnosis', label: 'Matches', f: v => badge(v.replace(/_/g, ' '), 'warn') }], d.log.filter(x => x.diagnosis))),
+  m0: () => '',
+  graph0: g => card('After the quiz: trust falls only where the sign rule is needed', graphSvg(g)),
+  gen: g => { const i = g.items[0]; return `<p class="big">Item: <span class="mono">${esc(i.stem)}</span> <span class="mute small">correct answer ${i.answer}; the sign error gives ${i.bugs.sub_negative}</span></p>`; },
+  tutor1: t => tutorCard(t, 'The student answers with the sign error. The tutor says:'),
+  att: a => `<div class="small mute" style="margin-bottom:10px">Recorded: ${esc(a.diagnosis_text)}. Mastery of this concept ${fmt.pct(a.mastery_before)} → ${fmt.pct(a.mastery_after)}; trusted ${fmt.pct(a.trusted_mastery_before)} → ${fmt.pct(a.trusted_mastery_after)}.</div>`,
+  next: n => card('Recommended next', `<p class="big">${badge(n.activity === 'remediate' ? 'fix a misconception' : n.activity, 'warn')} ${esc(n.concept_name)} · shown as a ${esc(n.strategy.replace('_', ' '))}</p><p style="margin:0 0 6px">Why: ${esc(n.reason)}.</p>
+    <p class="mono" style="margin:0 0 6px">${esc(n.item.stem)}</p><p class="small mute" style="margin:0">Policy: ${esc(n.policy)}.</p>`),
+  m4: (m, r) => card('Days 1 to 4', days(r, ['d1', 'd2', 'd3', 'd4'])),
+  m14: (m, r) => { const ks = ['d1', 'd2', 'd3', 'd4', 'd6', 'd8', 'd10', 'd12', 'd14'];
+    return `<div class="grid2">${card('Days 6 to 14', days(r, ks.slice(4)))}${card('Concepts mastered, days 1 to 14', lineChart([{ name: 'tutor thinks', points: ks.map(k => [r[k].day, r[k].mastered_now]), color: PALETTE[0] }, { name: 'really (simulator)', points: ks.map(k => [r[k].day, r[k].simulator_truth.really_mastered]), color: '#ececf1', dash: 1 }],
+      { h: 200, w: 420, ymin: 0, ymax: 18, xfmt: v => 'day ' + Math.round(v) }))}</div>`
+    + card('Review schedule', table([{ k: 'name', label: 'Concept' }, { k: 'attempts', label: 'Tries', num: 1 }, { k: 'half_life_days', label: 'Half-life', num: 1, f: v => v + ' days' }, { k: 'recall_today', label: 'Recall today', num: 1, f: v => fmt.pct(v) }, { k: 'review_due_day', label: 'Review due', num: 1, f: v => v == null ? '–' : 'day ' + v }],
+      m.concepts.filter(c => c.status === 'mastered').sort((a, b) => (a.review_due_day ?? 999) - (b.review_due_day ?? 999)).slice(0, 8))); },
+  graph14: g => card('Day 14', graphSvg(g)),
+  tutor2: t => tutorCard(t, 'A second wrong try, with an answer that matches no known misconception (9999):'),
+  bad: b => `<div class="card" style="border-color:var(--good)">${badge('refused', 'good')} An answer of "the answer is five" was not accepted: <span class="mono">${esc(b.detail)}</span></div>`,
+  exp: j => { const e = j.result, x = e.extra_concepts_mastered; return kpis([{ label: 'Adaptive tutor', value: fmt.n(e.adaptive.after, 1), sub: 'concepts mastered of ' + e.concepts }, { label: 'Fixed sequence with review', value: fmt.n(e.fixed.after, 1) },
+      { label: 'Difference', value: '+' + fmt.n(x.at_the_end, 1), sub: '95% interval ' + x.ci95[0] + ' to ' + x.ci95[1] }, { label: 'Two weeks later', value: '+' + fmt.n(x.two_weeks_later, 1), sub: 'no practice in between' }, { label: 'Students ahead / behind', value: x.students_better_off + ' / ' + x.students_worse_off, sub: 'of ' + e.students }])
+    + `<div class="grid2">${card('Per student, on average', table([{ k: 'k', label: '' }, { k: 'a', label: 'Adaptive', num: 1 }, { k: 'f', label: 'Fixed', num: 1 }], [['Mastered before', 'before'], ['Mastered after 30 days', 'after'], ['Two weeks later', 'later'], ['Test score after (of 18)', 'post_score'], ['Misconceptions left', 'misconceptions_left']].map(([k, f]) => ({ k, a: e.adaptive[f], f: e.fixed[f] })))
+        + `<div class="small mute" style="margin-top:8px">Control: ${esc(e.control)}.</div>`)}
+       ${card('How to present an activity: learnt by trying', table([{ k: 'context', label: 'Concept is', f: v => v === 'new' ? 'new to the learner' : 'already practised' }, { k: 'strategy', label: 'Shown as', f: v => esc(v.replace('_', ' ')) }, { k: 'tries', label: 'Times chosen', num: 1, f: v => fmt.n(v) }, { k: 'next_answer_correct', label: 'Next answer right', num: 1, f: v => fmt.pct(v) }], e.strategies_learnt))}</div>
+       <div class="card" style="border-color:var(--warn)">${badge('read this', 'warn')} ${esc(e.caveat)}</div>`; },
+  audit: a => card(`Audit log · hash chain ${a.chain_valid ? 'verifies' : 'BROKEN'}`, table([{ k: 'at', label: 'When', f: fmt.time }, { k: 'action', label: 'Action', f: v => `<span class="mono">${esc(v)}</span>` },
+    { k: 'detail', label: 'Detail', f: d => `<span class="small">${esc(Object.entries(d).filter(([, v]) => typeof v !== 'object').map(([k, v]) => `${k}: ${v}`).join(' · ').slice(0, 130))}</span>` }], a.events.slice().reverse())),
+};
+const demo = new Demo(R); demo.init();
+</script>
+</body>
+</html>
